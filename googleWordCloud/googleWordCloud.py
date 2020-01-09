@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr  5 21:47:00 2018
+Created on Fri Jan  3 18:22:59 2020
 
-@author: charlie.plumley
+Helper functions
+
+@author: charlie
 """
 
-import requests
+
+
 from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
 import time
 import sys
 from wordcloud import WordCloud, STOPWORDS
+from fake_useragent import UserAgent
 
+#__all__ = ['googleWordCloudFn']
 
-
-def getWebPage(url):
-   
-    from fake_useragent import UserAgent
+def getWebPage(url):  
+    
+    import requests
+    
     ua = UserAgent()
     headers = {'User-Agent': str(ua.chrome)}
     url = url.replace(' ','+')   
@@ -44,8 +49,13 @@ def getWebPage(url):
 
 
 def getAbstractsFromGooglePage(page):
-    soup = BeautifulSoup(page.content, 'lxml')
-              
+    
+    try:
+        soup = BeautifulSoup(page.content, 'html.parser')
+    except:
+        soup = BeautifulSoup(page.content)
+        
+        
     searchResults = soup.find_all('div',{'class':'srg'})
     
     abstractText = ""
@@ -65,7 +75,22 @@ def getAbstractsFromGooglePage(page):
     return abstractText
 
 
-def createWordCloud(text):
+def createWordCloud(text,searchTerm):
+    """
+    Create the word cloud based on the provided text and save to searchTerm.png
+
+    Parameters
+    ----------
+    text : STRING
+        A long string of text/words
+    searchTerm : STRING
+        The created word cloud will be saved to searchTerm.png.
+
+    Returns
+    -------
+    None. - saves "searchTerm.png" word cloud
+
+    """
     stopwords = set(STOPWORDS)
         
     wc = WordCloud(background_color="white", 
@@ -80,25 +105,32 @@ def createWordCloud(text):
     
     # show
     plt.imshow(wc, interpolation='bilinear')
-    plt.axis("off")
+    plt.axis('off')
+    plt.savefig(searchTerm + '.png')
     
-    return True
+    
 
+def createGoogleWordCloud(searchTerm):
+    """
+    This function creates a word cloud from the defined searchTerm and saves
+    a png to the current directory
 
-def googleWordCloud(searchTerm):
+    Parameters
+    ----------
+    searchTerm : STRING
+        The search term you wish to google.
+
+    Returns
+    -------
+    None. - saves "searchTerm.png" word cloud based on the google results
+
+    """
+    
     url = "https://www.google.co.uk/search?q="+searchTerm
     
     page = getWebPage(url)
     
     text = getAbstractsFromGooglePage(page)    
     
-    createWordCloud(text)
-
-    return True
-
-
-searchTerm = "resilience"
-
-googleWordCloud(searchTerm)
-
+    createWordCloud(text,searchTerm)
 
